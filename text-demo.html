@@ -1,0 +1,105 @@
+<html>
+  <head>
+    <title>Text Typing Demo</title>
+  </head>
+  <body>
+    <div id="foo" style="width:400px;height:400px;border:1px solid black;background-color:white;font-family:verdana;font-size:50;" contenteditable="true" onkeypress="addHighlight()"></div>
+    <script>
+      // Note: Theres a lot of issues with this demo.
+      // primarily, keystrokes are randomly not registered which i suspect is
+      // a consequence of mutating the div contents during the redraw.
+      // but it works fine as a proof-of-concept kind of demonstration.
+      // The rectangles are also only approximately accurate.
+
+      var element = document.getElementById("foo")
+
+      function redraw() {
+        element.style.display = 'none'
+        element.offsetHeight
+        element.style.display=''
+      }
+
+      // Highlight: [opacity, {coords}]
+      var highlights = {};
+      var highlight_id = 0;
+      var FRAME_LENGTH = 10;
+
+      var lastDraw = Date.now() + 1000; // Prevent issues with the first letter not being typed
+
+      function doRedraw() {
+        if (Date.now() - lastDraw > FRAME_LENGTH) {
+          lastDraw = Date.now();
+          redraw();
+        }
+      }
+
+      function addHighlight(event) {
+        highlights[++highlight_id] = new Array(100, getSelectionCoords());
+        highlight(highlight_id);
+      }
+
+
+      function highlight(highlight_id) {
+        doRedraw();
+        if (highlights[highlight_id][0] > 0) {
+          setTimeout(function () {highlights[highlight_id][0]-=1;highlight(highlight_id);}, FRAME_LENGTH);
+        } else {
+          delete highlights[highlight_id]
+        }
+      }
+
+      // Just goes through all the highlights.
+      element.registerCustomPaint(
+        function(canvas){
+          canvas.fillStyle = "#4190C4";
+          for (var highlight_id in highlights) {
+            var hl = highlights[highlight_id];
+            canvas.globalAlpha = hl[0]/255;
+            canvas.fillRect(hl[1]["x"], hl[1]["y"], hl[1]["w"], hl[1]["h"]);
+          }
+        }
+      )
+
+      // added w/h. based on
+      // http://stackoverflow.com/questions/6846230/coordinates-of-selected-text-in-browser-page
+      // gets rough approximation of location of previous letter
+      var prev = 0;
+      var MAX_SIZE = 60;
+      function getSelectionCoords() {
+        var sel = document.selection, range, rect;
+        var x = 0, y = 0, w = 0, h = 0;
+        if (sel) {
+          if (sel.type != "Control") {
+            range = sel.createRange();
+            range.collapse(true);
+            // this never gets here
+            x = range.boundingLeft;
+            y = range.boundingTop;
+            w = MAX_SIZE;
+            h = MAX_SIZE;
+          }
+        } else if (window.getSelection) {
+          sel = window.getSelection();
+          if (sel.rangeCount) {
+            range = sel.getRangeAt(0).cloneRange();
+            if (range.getClientRects) {
+              range.collapse(true);
+              if (range.getClientRects().length>0){
+                rect = range.getClientRects()[0];
+                if (prev > rect.left) prev = 0;
+                w = rect.left - prev; // TODO: Possibly dodgy
+                if (w > MAX_SIZE) w = MAX_SIZE;
+                x = rect.left - w;
+                y = rect.top;
+                h = rect.height;
+                if (h > 60) h = 60; // TODO: Fix this properly!
+                prev = rect.left;
+              }
+            }
+          }
+        }
+        return { x: x, y: y, w: w, h: h };
+      }
+      </script>
+  </body>
+</html>

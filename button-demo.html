@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <title>Ripple Button Demo</title>
+  </head>
+  <body>
+    <div id="foo" style="width:500px;height:500px;border:1px solid black;background-color:white;-webkit-user-select: none;"
+    onmousemove="saveCoords(event)" onmousedown="startHeldRipple(event);" onmouseup="endActive();" onmouseout="if (holdDown) {endActive();};">
+      BUTTON
+    </div>
+    <script>
+      // Native implementation of paint-demo.html
+      // Main differences are in ripple bookkeeping & ripple style.
+
+      var x = document.getElementById("foo")
+
+      // For holddown
+      var interval;
+
+      function redraw() {
+        x.style.display = 'none'
+        x.offsetHeight
+        x.style.display=''
+      }
+
+      // Ripple code below!
+      var MAX_RADIUS = 200;
+      var ripples = {};
+      var ripple_id = 0;
+      var FRAME_LENGTH = 5;
+
+      // Hold down ripple
+      var holdDown = false;
+      // r x y opacity
+      var holdDownRipple = [];
+      // Faking frames for animation
+      var lastDraw = Date.now();
+
+      // saving coords for drawing
+      var mouse_x, mouse_y;
+      function saveCoords(event) {
+        mouse_x = event.pageX - x.offsetLeft;
+        mouse_y = event.pageY - x.offsetTop;
+      }
+
+      function redrawRipples() {
+        if (Date.now() - lastDraw > FRAME_LENGTH) {
+          lastDraw = Date.now()
+          redraw()
+        }
+      }
+
+      function ripple(ripple_id) {
+        redrawRipples();
+        if (ripples[ripple_id][0] < MAX_RADIUS) {
+          setTimeout(function () {ripples[ripple_id][0]+=3;ripple(ripple_id);}, FRAME_LENGTH);
+        } else {
+          delete ripples[ripple_id];
+        }
+      }
+
+      function startHeldRipple(event) {
+        // Need to offset ripple by element position
+        holdDown = true;
+        holdDownRipple = new Array(0, mouse_x, mouse_y, 100);
+        // Need to set this back here.
+        heldRipple(ripple_id);
+        // Set an interval to update location.
+        interval = setInterval(updateHeld, 5);
+      }
+
+      // For the held down one.
+      function heldRipple() {
+        if (holdDown) {
+          redrawRipples();
+          if (holdDownRipple[0] < MAX_RADIUS) {
+            var opacity = holdDownRipple[3] + 1 < 255 ? holdDownRipple[3] + 1 : 255;
+            setTimeout(function () {holdDownRipple[0]+=3;holdDownRipple[3]=opacity;heldRipple();}, FRAME_LENGTH);
+          } else {
+            setTimeout(function () {heldRipple();}, FRAME_LENGTH);
+          }
+        }
+      }
+
+      function decreaseHeld(ripple_id) {
+        redrawRipples();
+        if (ripples[ripple_id][3] > 3) {
+          setTimeout(function () {ripples[ripple_id][3]-=3;decreaseHeld(ripple_id);}, FRAME_LENGTH);
+        } else {
+          delete ripples[ripple_id];
+        }
+      }
+
+      // Updates held down ripple coords
+      function updateHeld() {
+        // No new ripples since holding
+        holdDownRipple[1] = mouse_x;
+        holdDownRipple[2] = mouse_y;
+      }
+
+      function endActive() {
+        // If it's not over 2/3, want it to turn into a normal ripple.
+        if (holdDownRipple[0] < 2/3 * MAX_RADIUS) {
+          ripples[++ripple_id] = holdDownRipple.slice(0, -1)
+          ripple(ripple_id);
+        } else {
+        // Fade out at same size.
+          ripples[++ripple_id] = holdDownRipple.slice();
+          decreaseHeld(ripple_id);
+        }
+
+        holdDown = false;
+        holdDownRipple = [];
+
+        // clear the interval
+        clearInterval(interval);
+      }
+
+      // Just goes through all the ripples.
+      x.registerCustomPaint(
+        function(canvas){
+          // Draw normal ripples
+          canvas.fillStyle = "#4190C4";
+          for (var ripple in ripples) {
+            var opacity = 100;
+            var r = ripples[ripple][0], x = ripples[ripple][1], y = ripples[ripple][2];
+            // check if opacity already defined
+            if (ripples[ripple].length == 4) opacity = ripples[ripple][3];
+            // otherwise modify it appropriately
+            else if (r > 2/3 * MAX_RADIUS) opacity = MAX_RADIUS - r;
+            canvas.globalAlpha = opacity/255;
+            canvas.beginPath();
+            canvas.arc(x, y, r, 0, 2 * Math.PI, false);
+            canvas.fill();
+          }
+
+          // Draw held ripple
+          if (holdDown) {
+            var r = holdDownRipple[0], x = holdDownRipple[1], y = holdDownRipple[2];
+            canvas.fillStyle = "#2E75A3";
+            canvas.globalAlpha = holdDownRipple[3]/255;
+            canvas.beginPath();
+            canvas.arc(x, y, r, 0, 2 * Math.PI, false);
+            canvas.fill();
+          }
+          return true;
+        }
+      )
+    </script>
+  </body>
+</html>

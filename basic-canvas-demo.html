@@ -1,0 +1,124 @@
+<html>
+  <head>
+    <title>Basic Canvas Demo</title>
+    <style>
+      #buttons {
+        position:absolute;left:620;top:8;
+      }
+
+      #buttons input {
+          width:150px;
+          height:50px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="foo" style="width:600px;height:600px;border:1px solid black;background-color:white;"></div>
+
+    <div id="buttons">
+      <input type="button" value="Rectangle" onclick="registerFunction(rectangle);">
+      <input type="button" value="Transforms" onclick="registerFunction(rotateTranslate);">
+      <input type="button" value="Paths" onclick="registerFunction(strokeFill);">
+      <br>
+      <input type="button" value="Linear Gradient" onclick="registerFunction(linearGradient);">
+      <input type="button" value="Radial Gradient" onclick="registerFunction(radialGradient);">
+      <input type="button" value="Pattern" onclick="registerFunction(repeatPattern);">
+      <br>
+      <input type="button" value="Image" onclick="registerFunction(drawImage);">
+      <input type="button" value="Text" onclick="registerFunction(drawText);">
+
+      <pre id="functionDisplay" style ="width:600px;font-family:mono"></pre>
+    </div>
+
+    <script>
+      var element = document.getElementById("foo")
+      function redraw() {
+        element.style.display = 'none'
+        element.offsetHeight
+        element.style.display=''
+      }
+
+      function registerFunction(paintFunction) {
+        element.registerCustomPaint(paintFunction);
+        redraw();
+        var x = document.getElementById("functionDisplay");
+        x.textContent = paintFunction;
+      }
+
+      function rectangle(canvas) {
+        canvas.fillStyle = 'blue';
+        canvas.fillRect(100, 100, 200, 100);
+      }
+
+      function rotateTranslate(canvas) {
+        canvas.translate(canvas.width / 2, canvas.height / 2);
+        canvas.rotate(Math.PI / 4);
+        canvas.fillStyle = 'blue';
+        canvas.fillRect(-100, -50, 200, 100);
+      }
+
+      function strokeFill(canvas) {
+        canvas.beginPath();
+        canvas.arc(canvas.width/2, canvas.height/2, 100, 0, 2 * Math.PI, false);
+        canvas.fillStyle = 'blue';
+        canvas.fill();
+
+        canvas.lineWidth = 20;
+        canvas.setLineDash([10, 5]);
+        canvas.strokeStyle = 'black';
+        canvas.stroke();
+      }
+
+      // Gradient, image and text demos based on: http://www.html5canvastutorials.com/
+      function linearGradient(canvas) {
+        var grd = canvas.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grd.addColorStop(0, '#8ED6FF');
+        grd.addColorStop(1, '#004CB3');
+        canvas.fillStyle = grd;
+        canvas.fillRect(100, 100, 400, 400);
+      }
+
+      function radialGradient(canvas) {
+        var grd = canvas.createRadialGradient(238, 50, 10, 238, 50, 300);
+        grd.addColorStop(0, '#8ED6FF');
+        grd.addColorStop(1, '#004CB3');
+        canvas.fillStyle = grd;
+        canvas.fillRect(100, 100, 400, 400);
+      }
+
+      var imageObj = new Image();
+      imageObj.onload = function() {
+        redraw("test");
+      }
+      imageObj.src = 'img/pusheen.png';
+
+      function repeatPattern(canvas) {
+        var pattern = canvas.createPattern(imageObj, 'repeat');
+        canvas.fillStyle = pattern;
+        canvas.fillRect(50, 50, 500, 500);
+      }
+
+      function drawImage(canvas) {
+        var x = canvas.width/2 - imageObj.width/2;
+        var y = canvas.height/2 - imageObj.height/2
+        canvas.drawImage(imageObj, x, y);
+      }
+
+      function drawText(canvas) {
+        var x = canvas.width/2, y = canvas.height/2;
+
+        var text = "Hello";
+        canvas.font = '80pt Verdana';
+        canvas.textAlign = 'center';
+        canvas.fillText(text, x, y);
+
+        var metrics = canvas.measureText(text);
+        var width = metrics.width;
+        canvas.font = '20pt Arial';
+        canvas.textAlign = 'center';
+        canvas.fillStyle = '#555';
+        canvas.fillText('(' + width + 'px wide)', x, y + 50);
+      }
+    </script>
+  </body>
+</html>
