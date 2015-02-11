@@ -1,10 +1,13 @@
+## Glitter - Native Paint Demos
+
 Demos for the native implementation of the Glitter Paint APIs in Chromium.
 
 The following patches are required for them to run:
-https://codereview.chromium.org/835353005/
-https://codereview.chromium.org/849183003/
-https://codereview.chromium.org/866223003/ (Optional: required for patterns,
-    gradients, images, text)
+
+* https://codereview.chromium.org/835353005/
+* https://codereview.chromium.org/849183003/
+* https://codereview.chromium.org/866223003/
+    * Optional: required for patterns, gradients, images, text)
 
 They don't make use of any pipeline features (most notably, the animation is
 done in a very hacky way) and exist just to demonstrate the proof-of-concept
@@ -14,7 +17,7 @@ In the native implementation, you may call .registerCustomPaint(function)
 on any element with a background. The function takes in a "canvas"/"graphics
 context" as argument: eg
 
-    element.registerCustomPaint(function(ctx) {console.log(ctx.width);})
+```element.registerCustomPaint(function(ctx) {console.log(ctx.width);})```
 
 that is essentially a "write-only" version of a HTML canvas element's context.
 Core features of the "write-only canvas" include paths, stroke/fill/clip,
